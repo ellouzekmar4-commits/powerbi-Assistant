@@ -1,0 +1,15 @@
+# Secrets — NE JAMAIS versionner
+.env
+
+# Dependances (se reinstallent avec npm install)
+node_modules/
+
+# Logs
+*.log
+cf-fresh.log
+cf-err.log
+cloudflared*.log
+server.log
+
+# Divers
+*.zip
