@@ -64,7 +64,7 @@ const PORTAL_HTML = `<!DOCTYPE html>
 </head>
 <body>
   <iframe id="report" src="${PBI_EMBED_URL}" allowfullscreen></iframe>
-  <div id="chatPanel"><iframe src="/chatui" title="Assistant IA"></iframe></div>
+  <div id="chatPanel"><iframe src="/chatui" title="Assistant IA" allow="microphone"></iframe></div>
   <button id="chatToggle" title="Assistant IA">&#128172;</button>
   <script>
     var panel = document.getElementById('chatPanel');
@@ -357,6 +357,7 @@ const CHAT_HTML = `<!DOCTYPE html>
   <div class="typing" id="typing" style="display:none;">L'assistant ecrit...</div>
   <div class="inputRow">
     <input id="input" type="text" placeholder="Ecrivez un message..." autocomplete="off">
+    <button id="mic" title="Parler">&#127908;</button>
     <button id="send">&#10148;</button>
   </div>
   <script>
@@ -438,6 +439,36 @@ const CHAT_HTML = `<!DOCTYPE html>
     input.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') send();
     });
+
+    // --- Reconnaissance vocale (parler pour poser la question) ---
+    var micBtn = document.getElementById('mic');
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      micBtn.style.display = 'none';
+    } else {
+      var rec = new SR();
+      rec.lang = 'fr-FR';
+      rec.interimResults = false;
+      rec.maxAlternatives = 1;
+      var listening = false;
+      micBtn.addEventListener('click', function () {
+        if (listening) { rec.stop(); return; }
+        try { rec.start(); } catch (e) {}
+      });
+      rec.onstart = function () { listening = true; micBtn.style.background = '#ED7373'; input.placeholder = 'Parlez...'; };
+      rec.onend = function () { listening = false; micBtn.style.background = ''; input.placeholder = 'Ecrivez un message...'; };
+      rec.onerror = function (e) {
+        listening = false; micBtn.style.background = ''; input.placeholder = 'Ecrivez un message...';
+        if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+          addMessage('error', 'Microphone refuse. Autorisez l acces au micro dans le navigateur.');
+        }
+      };
+      rec.onresult = function (e) {
+        var t = e.results[0][0].transcript;
+        input.value = t;
+        send();
+      };
+    }
 
     document.getElementById('newChat').addEventListener('click', function () {
       chatHistory = [];

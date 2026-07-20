@@ -14,7 +14,7 @@
 </head>
 <body>
   <div id="loading"><div class="spin"></div>Connexion au dashboard...</div>
-  <iframe id="frame" style="display:none"></iframe>
+  <iframe id="frame" style="display:none" allow="microphone"></iframe>
   <script>
     fetch('url.txt?t=' + Date.now())
       .then(function (r) { return r.text(); })
