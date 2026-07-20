@@ -330,8 +330,11 @@ const CHAT_HTML = `<!DOCTYPE html>
   * { box-sizing: border-box; }
   body { margin:0; font-family: 'Segoe UI', sans-serif; background:#ffffff; display:flex; flex-direction:column; height:100vh; }
   .header { background:#0C3549; color:#fff; padding:12px 16px; font-weight:600; font-size:14px; display:flex; align-items:center; justify-content:space-between; }
-  .newChat { background:transparent; border:1px solid rgba(255,255,255,.5); color:#fff; border-radius:12px; padding:3px 10px; font-size:11px; cursor:pointer; font-family:inherit; }
+  .newChat { background:transparent; border:1px solid rgba(255,255,255,.5); color:#fff; border-radius:12px; padding:3px 8px; font-size:13px; cursor:pointer; font-family:inherit; }
   .newChat:hover { background:rgba(255,255,255,.15); }
+  .hdrRight { display:flex; align-items:center; gap:6px; }
+  .hdrRight select { background:rgba(255,255,255,.15); color:#fff; border:1px solid rgba(255,255,255,.4); border-radius:8px; font-size:11px; padding:2px 4px; cursor:pointer; }
+  .hdrRight select option { color:#000; }
   .messages { flex:1; padding:12px; overflow-y:auto; font-size:13px; color:#252423; }
   .msg { border-radius:8px; padding:8px 10px; margin-bottom:8px; max-width:85%; word-wrap:break-word; white-space:pre-wrap; }
   .msg.bot { background:#f2f2f2; }
@@ -350,7 +353,7 @@ const CHAT_HTML = `<!DOCTYPE html>
 </style>
 </head>
 <body>
-  <div class="header">Assistant IA <button class="newChat" id="newChat" title="Effacer la conversation">&#8634; Nouveau chat</button></div>
+  <div class="header"><span>Assistant IA</span><span class="hdrRight"><select id="micLang" title="Langue du micro"><option value="fr-FR">FR</option><option value="en-US">EN</option><option value="ar-SA">AR</option></select><button class="newChat" id="newChat" title="Nouveau chat">&#8634;</button></span></div>
   <div class="messages" id="messages">
     <div class="msg bot">Bonjour ! Comment puis-je vous aider avec vos donnees ?</div>
   </div>
@@ -447,12 +450,13 @@ const CHAT_HTML = `<!DOCTYPE html>
       micBtn.style.display = 'none';
     } else {
       var rec = new SR();
-      rec.lang = 'fr-FR';
       rec.interimResults = false;
       rec.maxAlternatives = 1;
       var listening = false;
+      var micLang = document.getElementById('micLang');
       micBtn.addEventListener('click', function () {
         if (listening) { rec.stop(); return; }
+        rec.lang = micLang ? micLang.value : 'fr-FR';
         try { rec.start(); } catch (e) {}
       });
       rec.onstart = function () { listening = true; micBtn.style.background = '#ED7373'; input.placeholder = 'Parlez...'; };
