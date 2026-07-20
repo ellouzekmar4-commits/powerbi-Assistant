@@ -51,7 +51,7 @@ app.listen(PORT, () => console.log(`Chatbot "${ASSISTANT_NAME}" sur http://local
 
 function getSystemPrompt() {
     const dateStr = new Date().toLocaleDateString("fr-FR", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
-    return `Tu es "${ASSISTANT_NAME}", l'assistant d'un dashboard Power BI. Reponds en francais, de maniere concise et professionnelle.
+    return `Tu es "${ASSISTANT_NAME}", l'assistant d'un dashboard Power BI. Reponds TOUJOURS dans la meme langue que la question de l'utilisateur (francais, anglais, arabe, etc.), de maniere concise et professionnelle.
 
 Tu as acces a un outil "query_database" pour interroger en LECTURE SEULE la base SQL Server qui alimente ce dashboard. Utilise-le des qu'une question porte sur des donnees reelles.
 

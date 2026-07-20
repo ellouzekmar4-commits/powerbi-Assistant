@@ -101,7 +101,7 @@ app.listen(PORT, () => {
     console.log(`Chat UI: http://localhost:${PORT}/chatui`);
 });
 
-const SYSTEM_PROMPT = `Tu es l'assistant du dashboard Power BI "cliniqueeee". Reponds en francais, de maniere concise et professionnelle.
+const SYSTEM_PROMPT = `Tu es l'assistant du dashboard Power BI "cliniqueeee". Reponds TOUJOURS dans la meme langue que la question de l'utilisateur (francais, anglais, arabe, etc.), de maniere concise et professionnelle.
 
 Tu as acces a un outil "query_database" pour interroger en lecture seule la base SQL Server "csys" qui alimente ce dashboard. Utilise-le des qu'une question porte sur des donnees reelles (clients, ventes, produits, etc.) plutot que d'inventer une reponse.
 
