@@ -339,7 +339,7 @@ const CHAT_HTML = `<!DOCTYPE html>
   .msg.error { background:#fdecea; color:#b3261e; }
   .inputRow { padding:8px 10px; border-top:1px solid #eee; display:flex; gap:6px; }
   .inputRow input { flex:1; border:1px solid #ddd; border-radius:14px; padding:8px 12px; font-size:12px; }
-  .inputRow button { background:#48b096; color:#fff; border:none; border-radius:50%; width:34px; height:34px; cursor:pointer; font-size:14px; }
+  .inputRow button { background:#48b096; color:#fff; border:none; border-radius:50%; width:34px; height:34px; min-width:34px; cursor:pointer; font-size:14px; display:inline-flex; align-items:center; justify-content:center; padding:0; }
   .inputRow button:disabled { opacity:0.5; cursor:default; }
   .typing { font-style:italic; color:#999; font-size:12px; padding:0 12px 8px; }
   .msg table { border-collapse:collapse; width:100%; margin:4px 0; font-size:12px; }
@@ -357,7 +357,7 @@ const CHAT_HTML = `<!DOCTYPE html>
   <div class="typing" id="typing" style="display:none;">L'assistant ecrit...</div>
   <div class="inputRow">
     <input id="input" type="text" placeholder="Ecrivez un message..." autocomplete="off">
-    <button id="mic" title="Parler">&#127908;</button>
+    <button id="mic" title="Parler"><svg width="17" height="17" viewBox="0 0 24 24" fill="#fff"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M19 11a1 1 0 1 0-2 0 5 5 0 0 1-10 0 1 1 0 1 0-2 0 7 7 0 0 0 6 6.93V21a1 1 0 1 0 2 0v-3.07A7 7 0 0 0 19 11z"/></svg></button>
     <button id="send">&#10148;</button>
   </div>
   <script>
