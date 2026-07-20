@@ -479,6 +479,7 @@ const CHAT_HTML = `<!DOCTYPE html>
     // --- Micro : enregistre la voix, Gemini la transcrit (toutes langues, detection auto) ---
     var micBtn = document.getElementById('mic');
     var recording = false, mediaRec = null, chunks = [], micStream = null;
+    var vadCtx = null, vadTimer = null;
 
     if (!navigator.mediaDevices || !window.MediaRecorder) {
       micBtn.style.display = 'none';
@@ -497,14 +498,49 @@ const CHAT_HTML = `<!DOCTYPE html>
         mediaRec.start();
         recording = true;
         micBtn.style.background = '#ED7373';
-        input.placeholder = 'Parlez... (recliquez pour arreter)';
+        input.placeholder = 'Parlez...';
+        setupSilence(stream);
       }).catch(function () {
         addMessage('error', 'Microphone refuse. Autorisez l acces au micro.');
       });
     }
 
+    // Detecte quand vous arretez de parler et stoppe automatiquement
+    function setupSilence(stream) {
+      try {
+        var Ctx = window.AudioContext || window.webkitAudioContext;
+        vadCtx = new Ctx();
+        var src = vadCtx.createMediaStreamSource(stream);
+        var analyser = vadCtx.createAnalyser();
+        analyser.fftSize = 512;
+        src.connect(analyser);
+        var data = new Uint8Array(analyser.fftSize);
+        var spoke = false, silenceStart = null, startTime = Date.now();
+        vadTimer = setInterval(function () {
+          analyser.getByteTimeDomainData(data);
+          var sum = 0;
+          for (var i = 0; i < data.length; i++) { var v = (data[i] - 128) / 128; sum += v * v; }
+          var rms = Math.sqrt(sum / data.length);
+          var now = Date.now();
+          if (rms > 0.025) { spoke = true; silenceStart = null; }
+          else if (spoke) {
+            if (!silenceStart) silenceStart = now;
+            else if (now - silenceStart > 1300) { stopRec(); }
+          }
+          if (now - startTime > 20000) { stopRec(); }
+        }, 150);
+      } catch (e) {}
+    }
+
+    function stopSilence() {
+      if (vadTimer) { clearInterval(vadTimer); vadTimer = null; }
+      if (vadCtx) { try { vadCtx.close(); } catch (e) {} vadCtx = null; }
+    }
+
     function stopRec() {
+      if (!recording) return;
       recording = false;
+      stopSilence();
       micBtn.style.background = '';
       input.placeholder = 'Transcription...';
       input.disabled = true; sendBtn.disabled = true;
@@ -526,7 +562,8 @@ const CHAT_HTML = `<!DOCTYPE html>
       }).then(function (r) { return r.json(); }).then(function (data) {
         input.disabled = false; sendBtn.disabled = false; input.placeholder = 'Ecrivez un message...';
         if (data.error) { addMessage('error', 'Erreur transcription : ' + data.error); return; }
-        if (data.text) { input.value = data.text; send(); } else { input.focus(); }
+        if (data.text) { input.value = data.text; }
+        input.focus();
       }).catch(function (err) {
         input.disabled = false; sendBtn.disabled = false; input.placeholder = 'Ecrivez un message...';
         addMessage('error', 'Erreur micro : ' + err.message);
