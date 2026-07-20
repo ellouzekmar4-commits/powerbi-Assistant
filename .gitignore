@@ -1,5 +1,6 @@
 # Secrets — NE JAMAIS versionner
 .env
+github-token.txt
 
 # Dependances (se reinstallent avec npm install)
 node_modules/

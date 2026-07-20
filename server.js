@@ -121,11 +121,15 @@ Definitions metier (identiques au dashboard, a respecter) :
 - Quantite Vendue = SUM(quantite) ou typmvt='S'
 - Marge = SUM(quantite * (priuni - priach)) ou typmvt='S' (ne PAS utiliser la colonne 'marge', elle n'est pas fiable)
 - Taux de marge % = Marge / CA
-- Exclus TOUJOURS les clients dont Nom est NULL ou vide (LTRIM(RTRIM(Nom)) <> '')
 
-Pour le CA par famille d'articles : MvtSto -> Stock (codart) -> FamArt.
-Pour le CA par representant : MvtSto -> Facture (numbon) -> Represt (codrep).
-Pour le CA par region/ville : MvtSto -> Facture -> Client -> soureg.
+PERFORMANCE (TRES IMPORTANT) : la base est volumineuse. Joins UNIQUEMENT les tables strictement necessaires a la question. N'ajoute JAMAIS de jointure inutile.
+- Le filtre "exclure les clients dont Nom est NULL ou vide" (c.Nom IS NOT NULL AND LTRIM(RTRIM(c.Nom)) <> '') s'applique SEULEMENT quand la question porte sur les clients (regroupement ou filtre par client). Pour une question par famille, par article ou par representant, ne joins PAS la table Client du tout.
+
+Chemins de jointure (utilise le plus court possible) :
+- CA par famille d'articles : MvtSto -> Stock (codart) -> FamArt. (NE PAS joindre Facture ni Client)
+- CA par article : MvtSto seul (desart) ou -> Stock. (NE PAS joindre Facture ni Client)
+- CA par representant : MvtSto -> Facture (numbon) -> Represt (codrep). (NE PAS joindre Client)
+- CA par client / region / ville : MvtSto -> Facture -> Client (-> soureg), AVEC le filtre nom non vide.
 
 Ajoute TOUJOURS le hint WITH (NOLOCK) apres chaque table pour ne pas bloquer l'application de production.
 
@@ -141,7 +145,9 @@ ORDER BY VentesNettes DESC
 
 Toute requete doit etre un SELECT en lecture seule (jamais INSERT/UPDATE/DELETE/DROP/etc.).
 
-REGLE ABSOLUE : n'invente JAMAIS de noms de clients, de montants ou de donnees. Si l'outil query_database echoue, renvoie une erreur, ou si tu n'es pas sûr du resultat, dis-le explicitement a l'utilisateur (ex: "je n'ai pas pu récupérer cette donnée, réessayez") plutot que de fournir un exemple ou une estimation qui ressemble a une vraie reponse.`;
+REGLE ABSOLUE : n'invente JAMAIS de noms de clients, de montants ou de donnees. Si l'outil query_database echoue, renvoie une erreur, ou si tu n'es pas sûr du resultat, dis-le explicitement a l'utilisateur (ex: "je n'ai pas pu récupérer cette donnée, réessayez") plutot que de fournir un exemple ou une estimation qui ressemble a une vraie reponse.
+
+FORMAT DE REPONSE : quand ta reponse presente plusieurs lignes de donnees (par exemple un CA par famille, un classement, une repartition), formate-les OBLIGATOIREMENT en tableau HTML avec la balise <table>, des en-tetes <th> et des cellules <td>. Aligne les nombres a droite avec style='text-align:right'. N'utilise PAS de tableaux Markdown (avec des | ). Pour une reponse a une seule valeur ou une phrase, reste en texte simple.`;
 
 const GEMINI_MODEL = "gemini-3.1-flash-lite";
 
@@ -336,6 +342,11 @@ const CHAT_HTML = `<!DOCTYPE html>
   .inputRow button { background:#48b096; color:#fff; border:none; border-radius:50%; width:34px; height:34px; cursor:pointer; font-size:14px; }
   .inputRow button:disabled { opacity:0.5; cursor:default; }
   .typing { font-style:italic; color:#999; font-size:12px; padding:0 12px 8px; }
+  .msg table { border-collapse:collapse; width:100%; margin:4px 0; font-size:12px; }
+  .msg th, .msg td { border:1px solid #ddd; padding:4px 8px; text-align:left; }
+  .msg th { background:#0C3549; color:#fff; font-weight:600; }
+  .msg tr:nth-child(even) td { background:#f7f7f7; }
+  .msg.bot { overflow-x:auto; }
 </style>
 </head>
 <body>
@@ -355,10 +366,34 @@ const CHAT_HTML = `<!DOCTYPE html>
     var sendBtn = document.getElementById('send');
     var typingEl = document.getElementById('typing');
 
+    var ALLOWED = /^(TABLE|THEAD|TBODY|TFOOT|TR|TH|TD|B|STRONG|EM|I|BR|UL|OL|LI|P|SPAN|DIV|H3|H4)$/;
+    function sanitize(node) {
+      Array.prototype.slice.call(node.childNodes).forEach(function (c) {
+        if (c.nodeType === 1) {
+          if (!ALLOWED.test(c.tagName)) {
+            c.parentNode.replaceChild(document.createTextNode(c.textContent), c);
+            return;
+          }
+          Array.prototype.slice.call(c.attributes).forEach(function (a) {
+            if (!/^(style|colspan|rowspan)$/i.test(a.name)) c.removeAttribute(a.name);
+          });
+          sanitize(c);
+        }
+      });
+    }
+
     function addMessage(role, text) {
       var div = document.createElement('div');
       div.className = 'msg ' + role;
-      div.textContent = text;
+      if (role === 'bot' && /<(table|ul|ol|strong|b|br|p)/i.test(text)) {
+        var tmp = document.createElement('div');
+        tmp.innerHTML = text.replace(/\\*\\*([^*]+)\\*\\*/g, '<strong>$1</strong>');
+        sanitize(tmp);
+        div.innerHTML = tmp.innerHTML;
+        div.style.whiteSpace = 'normal';
+      } else {
+        div.textContent = text;
+      }
       messagesEl.appendChild(div);
       messagesEl.scrollTop = messagesEl.scrollHeight;
     }
