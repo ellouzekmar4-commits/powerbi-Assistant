@@ -1,0 +1,42 @@
+>>> Copier ce fichier en "schema.txt" et le remplir avec VOTRE base. <<<
+>>> C'est le SEUL vrai travail : plus c'est precis, mieux l'assistant repond. <<<
+
+Schema (lecture seule) :
+- dbo.MaTable1 : colonne1 (description), colonne2 (description), cle_etrangere (-> MaTable2.cle)
+- dbo.MaTable2 : cle (description), libelle (description)
+- ... (listez toutes les tables utiles et leurs colonnes cles)
+
+Definitions metier (comment calculer les indicateurs, comme dans le dashboard) :
+- Chiffre d'affaires = SUM(colonne_montant) WHERE type = 'vente'
+- Marge = ...
+- (decrivez chaque mesure importante en clair)
+
+Chemins de jointure (le plus court possible) :
+- Indicateur X par categorie : TableFait -> TableProduit -> TableCategorie
+- Indicateur X par client : TableFait -> TableFacture -> TableClient
+- (indiquez quelles tables joindre pour chaque type de question, et lesquelles NE PAS joindre)
+
+Regles specifiques (optionnel) :
+- Exclure les lignes ou ... est NULL ou vide
+- Ne jamais compter les types 'annulé' / 'brouillon' / ...
+
+------------------------------------------------------------
+EXEMPLE REEL (base "csys" de la clinique) — pour inspiration :
+
+Schema :
+- dbo.Client : CodCli, Nom, CodRep (-> Represt.CodRep), codSouReg (-> soureg.codsoureg)
+- dbo.Facture : numbon, codcli (-> Client.CodCli), codrep (-> Represt.CodRep), datesys
+- dbo.MvtSto : numbon (-> Facture.numbon), codart (-> Stock.codart), desart, quantite,
+  priuni, priach, montht, typmvt ('S'=vente, 'E'=retour, 'T'=transfert, 'X'=devis)
+- dbo.Stock : codart, desart, FamArt (-> FamArt.FamArt)
+- dbo.FamArt : FamArt, DesFam
+- dbo.Represt : CodRep, Nom
+
+Definitions :
+- Chiffre d'affaires = SUM(montht) ou typmvt='S'
+- Ventes Nettes = CA - retours (typmvt='E')
+- Marge = SUM(quantite * (priuni - priach)) ou typmvt='S'
+
+Jointures :
+- CA par famille : MvtSto -> Stock -> FamArt (NE PAS joindre Client)
+- CA par client : MvtSto -> Facture -> Client, avec filtre Nom non vide
