@@ -3,7 +3,7 @@ const express = require('express');
 const sql = require('mssql');
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '25mb' }));
 
 app.use(function (req, res, next) {
     console.log(`[req] ${req.method} ${req.url} | origin=${req.headers.origin || "-"} | ua=${(req.headers["user-agent"] || "-").slice(0, 60)}`);
@@ -95,6 +95,39 @@ app.post('/api/chatapi', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+app.post('/api/transcribe', async (req, res) => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY non configuree" });
+    const audio = req.body && req.body.audio;
+    if (!audio) return res.status(400).json({ error: "audio manquant" });
+    try {
+        const text = await transcribeAudio(audio, apiKey);
+        res.json({ text: text });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+async function transcribeAudio(b64wav, apiKey) {
+    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent?key=" + apiKey, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+            contents: [{
+                parts: [
+                    { text: "Transcris exactement ce que dit cet audio, dans sa langue d'origine (ne traduis pas). Reponds uniquement avec le texte transcrit, sans commentaire." },
+                    { inline_data: { mime_type: "audio/wav", data: b64wav } }
+                ]
+            }]
+        })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error((data.error && data.error.message) || "Erreur transcription Gemini");
+    const parts = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
+    const t = parts.filter(function (p) { return p.text && !p.thought; }).map(function (p) { return p.text; }).join("").trim();
+    return t;
+}
 
 app.listen(PORT, () => {
     console.log(`Chatbot server listening on http://localhost:${PORT}`);
@@ -353,7 +386,7 @@ const CHAT_HTML = `<!DOCTYPE html>
 </style>
 </head>
 <body>
-  <div class="header"><span>Assistant IA</span><span class="hdrRight"><select id="micLang" title="Langue du micro"><option value="fr-FR">FR</option><option value="en-US">EN</option><option value="ar-SA">AR</option></select><button class="newChat" id="newChat" title="Nouveau chat">&#8634;</button></span></div>
+  <div class="header">Assistant IA <button class="newChat" id="newChat" title="Effacer la conversation">&#8634; Nouveau chat</button></div>
   <div class="messages" id="messages">
     <div class="msg bot">Bonjour ! Comment puis-je vous aider avec vos donnees ?</div>
   </div>
@@ -443,35 +476,76 @@ const CHAT_HTML = `<!DOCTYPE html>
       if (e.key === 'Enter') send();
     });
 
-    // --- Reconnaissance vocale (parler pour poser la question) ---
+    // --- Micro : enregistre la voix, Gemini la transcrit (toutes langues, detection auto) ---
     var micBtn = document.getElementById('mic');
-    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
+    var recording = false, mediaRec = null, chunks = [], micStream = null;
+
+    if (!navigator.mediaDevices || !window.MediaRecorder) {
       micBtn.style.display = 'none';
     } else {
-      var rec = new SR();
-      rec.interimResults = false;
-      rec.maxAlternatives = 1;
-      var listening = false;
-      var micLang = document.getElementById('micLang');
       micBtn.addEventListener('click', function () {
-        if (listening) { rec.stop(); return; }
-        rec.lang = micLang ? micLang.value : 'fr-FR';
-        try { rec.start(); } catch (e) {}
+        if (recording) { stopRec(); } else { startRec(); }
       });
-      rec.onstart = function () { listening = true; micBtn.style.background = '#ED7373'; input.placeholder = 'Parlez...'; };
-      rec.onend = function () { listening = false; micBtn.style.background = ''; input.placeholder = 'Ecrivez un message...'; };
-      rec.onerror = function (e) {
-        listening = false; micBtn.style.background = ''; input.placeholder = 'Ecrivez un message...';
-        if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-          addMessage('error', 'Microphone refuse. Autorisez l acces au micro dans le navigateur.');
-        }
-      };
-      rec.onresult = function (e) {
-        var t = e.results[0][0].transcript;
-        input.value = t;
-        send();
-      };
+    }
+
+    function startRec() {
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+        micStream = stream; chunks = [];
+        mediaRec = new MediaRecorder(stream);
+        mediaRec.ondataavailable = function (e) { if (e.data.size) chunks.push(e.data); };
+        mediaRec.onstop = handleStop;
+        mediaRec.start();
+        recording = true;
+        micBtn.style.background = '#ED7373';
+        input.placeholder = 'Parlez... (recliquez pour arreter)';
+      }).catch(function () {
+        addMessage('error', 'Microphone refuse. Autorisez l acces au micro.');
+      });
+    }
+
+    function stopRec() {
+      recording = false;
+      micBtn.style.background = '';
+      input.placeholder = 'Transcription...';
+      input.disabled = true; sendBtn.disabled = true;
+      if (mediaRec && mediaRec.state !== 'inactive') mediaRec.stop();
+    }
+
+    function handleStop() {
+      if (micStream) micStream.getTracks().forEach(function (t) { t.stop(); });
+      var blob = new Blob(chunks);
+      blob.arrayBuffer().then(function (buf) {
+        var Ctx = window.AudioContext || window.webkitAudioContext;
+        return new Ctx().decodeAudioData(buf);
+      }).then(function (audioBuf) {
+        var wavB64 = encodeWavBase64(audioBuf);
+        return fetch('/api/transcribe', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ audio: wavB64 })
+        });
+      }).then(function (r) { return r.json(); }).then(function (data) {
+        input.disabled = false; sendBtn.disabled = false; input.placeholder = 'Ecrivez un message...';
+        if (data.error) { addMessage('error', 'Erreur transcription : ' + data.error); return; }
+        if (data.text) { input.value = data.text; send(); } else { input.focus(); }
+      }).catch(function (err) {
+        input.disabled = false; sendBtn.disabled = false; input.placeholder = 'Ecrivez un message...';
+        addMessage('error', 'Erreur micro : ' + err.message);
+      });
+    }
+
+    function encodeWavBase64(audioBuf) {
+      var ch = audioBuf.getChannelData(0), rate = audioBuf.sampleRate, len = ch.length;
+      var buffer = new ArrayBuffer(44 + len * 2), view = new DataView(buffer);
+      function ws(o, s) { for (var i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); }
+      ws(0, 'RIFF'); view.setUint32(4, 36 + len * 2, true); ws(8, 'WAVE'); ws(12, 'fmt ');
+      view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+      view.setUint32(24, rate, true); view.setUint32(28, rate * 2, true); view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+      ws(36, 'data'); view.setUint32(40, len * 2, true);
+      var off = 44;
+      for (var i = 0; i < len; i++) { var s = Math.max(-1, Math.min(1, ch[i])); view.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true); off += 2; }
+      var bytes = new Uint8Array(buffer), bin = '';
+      for (var j = 0; j < bytes.length; j++) bin += String.fromCharCode(bytes[j]);
+      return btoa(bin);
     }
 
     document.getElementById('newChat').addEventListener('click', function () {
