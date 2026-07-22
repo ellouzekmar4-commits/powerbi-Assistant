@@ -253,4 +253,4 @@ Tout ce qui dépend de la base est à **deux endroits** : le `.env` (connexion) 
 
 ---
 
-*Construit étape par étape avec Claude. Gratuit, ouvert, réutilisable.*
+
