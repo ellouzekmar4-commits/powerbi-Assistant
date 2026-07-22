@@ -88,8 +88,9 @@ app.post('/api/chatapi', async (req, res) => {
         return res.status(400).json({ error: "Parametre 'messages' manquant ou vide" });
     }
 
+    const model = (req.body && req.body.model) || GEMINI_MODEL;
     try {
-        const reply = await runConversation(userMessages, apiKey);
+        const reply = await runConversation(userMessages, apiKey, model);
         res.json({ reply });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -216,13 +217,13 @@ function toGeminiContents(messages) {
     });
 }
 
-async function callGemini(contents, apiKey) {
+async function callGemini(contents, apiKey, model) {
     const maxRetries = 3;
     let lastError;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         const res = await fetch(
-            "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent?key=" + apiKey,
+            "https://generativelanguage.googleapis.com/v1beta/models/" + (model || GEMINI_MODEL) + ":generateContent?key=" + apiKey,
             {
                 method: "POST",
                 headers: { "content-type": "application/json" },
@@ -255,12 +256,12 @@ async function callGemini(contents, apiKey) {
     throw new Error(lastError || "Erreur API Gemini");
 }
 
-async function runConversation(initialMessages, apiKey) {
+async function runConversation(initialMessages, apiKey, model) {
     let contents = toGeminiContents(initialMessages);
 
     for (let turn = 0; turn < 5; turn++) {
         let t0 = Date.now();
-        const data = await callGemini(contents, apiKey);
+        const data = await callGemini(contents, apiKey, model);
         console.log(`[turn ${turn}] Gemini call took ${Date.now() - t0}ms`);
 
         const candidate = data.candidates && data.candidates[0];
