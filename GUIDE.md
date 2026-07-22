@@ -1,71 +1,71 @@
-# 🤖 Build Your Own AI Chatbot for a Power BI Dashboard (Free, with Voice)
+# 🤖 Créer votre propre chatbot IA pour un tableau de bord Power BI (Gratuit, avec Voix)
 
-A complete, step-by-step guide to build an AI assistant that answers questions in natural language by querying your **real SQL Server database live**, embedded in your Power BI report — with **voice input** and a **permanent free URL**.
+Guide complet, étape par étape, pour construire un assistant IA qui répond en langage naturel en interrogeant **votre vraie base de données SQL Server en direct** — intégré à votre rapport Power BI, avec **entrée vocale** et une **URL permanente gratuite**.
 
-> This guide is generic. It was built for a clinic (`csys` database) but works for **any SQL Server + Power BI project**. Anyone can follow it.
+> Ce guide est générique. Il a été construit pour une clinique (base `csys`) mais fonctionne pour **n'importe quel projet SQL Server + Power BI**. Tout le monde peut le suivre.
 
 ---
 
-## What you get
+## Ce que vous obtenez
 
-- 💬 A chat assistant inside your Power BI report (floating button) **and** a full web portal
-- 📊 Answers built from your **real data** (live SQL queries), not made up
-- 🎤 **Voice input** — speak your question in any language, it transcribes and answers
-- 🌍 Multilingual (answers in the language of the question)
-- 🆓 **100% free** (Google Gemini free tier + free hosting tunnel)
-- 🔗 A **permanent URL** that never changes
+- 💬 Un assistant de chat dans votre rapport Power BI (bouton flottant) **et** un portail web complet
+- 📊 Des réponses construites à partir de vos **vraies données** (requêtes SQL en direct), pas inventées
+- 🎤 **Entrée vocale** — parlez votre question dans n'importe quelle langue, elle est transcrite puis répondue
+- 🌍 Multilingue (répond dans la langue de la question)
+- 🆓 **100% gratuit** (Google Gemini niveau gratuit + tunnel d'hébergement gratuit)
+- 🔗 Une **URL permanente** qui ne change jamais
 
-## How it works (architecture)
+## Comment ça marche (architecture)
 
 ```
-User (browser / Power BI)
+Utilisateur (navigateur / Power BI)
         │
         ▼
-Permanent public URL  ── Tailscale Funnel (free, stable)
+URL publique permanente  ── Tailscale Funnel (gratuit, stable)
         │
         ▼
-Local Node.js server  (runs on your PC)
+Serveur Node.js local  (tourne sur votre PC)
         │
    ┌────┴─────┐
    ▼          ▼
-SQL Server   Google Gemini API
-(your data)  (the "brain")
+SQL Server   API Google Gemini
+(vos données) (le "cerveau")
 ```
 
-The **brain**: Gemini receives the question + your database schema, writes a SQL query, the server runs it (read-only), then Gemini turns the result into a clear answer/table.
+Le **cerveau** : Gemini reçoit la question + le schéma de votre base, génère une requête SQL, le serveur l'exécute (lecture seule), puis Gemini transforme le résultat en une réponse/tableau clair.
 
 ---
 
-## Prerequisites
+## Prérequis
 
-- Windows PC with your **SQL Server** database and **Power BI Desktop**
-- [Node.js](https://nodejs.org) (LTS)
-- A free [Google AI Studio](https://aistudio.google.com) account (for the Gemini API key)
-- A free [Tailscale](https://tailscale.com) account (for the permanent URL)
-- (Optional) A free [GitHub](https://github.com) account (to back up your code)
+- Un PC Windows avec votre base **SQL Server** et **Power BI Desktop**
+- [Node.js](https://nodejs.org) (version LTS)
+- Un compte gratuit [Google AI Studio](https://aistudio.google.com) (pour la clé API Gemini)
+- Un compte gratuit [Tailscale](https://tailscale.com) (pour l'URL permanente)
+- (Optionnel) Un compte gratuit [GitHub](https://github.com) (pour sauvegarder le code)
 
 ---
 
-## STEP 1 — Create a read-only database user
+## ÉTAPE 1 — Créer un utilisateur base de données en lecture seule
 
-The chatbot must only **read** data, never modify it. In SQL Server Management Studio (or `sqlcmd`), run:
+Le chatbot ne doit que **lire** les données, jamais les modifier. Dans SQL Server Management Studio (ou `sqlcmd`), exécutez :
 
 ```sql
-CREATE LOGIN chatbot_reader WITH PASSWORD = 'ChangeMe_StrongPassword!';
-USE YourDatabase;
+CREATE LOGIN chatbot_reader WITH PASSWORD = 'ChangezMoi_MotDePasseFort!';
+USE VotreBase;
 CREATE USER chatbot_reader FOR LOGIN chatbot_reader;
--- one GRANT per table the bot may read:
+-- une ligne GRANT par table que le bot peut lire :
 GRANT SELECT ON dbo.Table1 TO chatbot_reader;
 GRANT SELECT ON dbo.Table2 TO chatbot_reader;
 ```
 
-Make sure SQL Server accepts **SQL authentication** (Mixed Mode) and has a reachable **TCP port** (default 1433). For a named instance, set a static port in *SQL Server Configuration Manager → TCP/IP → IPAll → TCP Port = 1433*, then restart the SQL service.
+Vérifiez que SQL Server accepte l'**authentification SQL** (mode mixte) et a un **port TCP** accessible (1433 par défaut). Pour une instance nommée, fixez un port statique dans *Gestionnaire de configuration SQL Server → TCP/IP → IPAll → Port TCP = 1433*, puis redémarrez le service SQL.
 
 ---
 
-## STEP 2 — Get the server code
+## ÉTAPE 2 — Récupérer le code du serveur
 
-Create a folder `powerbi-chatbot-server` and add the files below.
+Créez un dossier `powerbi-chatbot-server` et ajoutez les fichiers ci-dessous.
 
 ### `package.json`
 ```json
@@ -82,101 +82,101 @@ Create a folder `powerbi-chatbot-server` and add the files below.
 }
 ```
 
-### `.env` (your secrets — never share this file)
+### `.env` (vos secrets — ne partagez JAMAIS ce fichier)
 ```
 PORT=3000
 SQL_HOST=localhost
 SQL_PORT=1433
-SQL_DATABASE=YourDatabase
+SQL_DATABASE=VotreBase
 SQL_USER=chatbot_reader
-SQL_PASSWORD=ChangeMe_StrongPassword!
-GEMINI_API_KEY=your_gemini_key_here
+SQL_PASSWORD=ChangezMoi_MotDePasseFort!
+GEMINI_API_KEY=votre_cle_gemini_ici
 ```
 
-Get the Gemini key at **aistudio.google.com → Get API key → Create API key** (free, no credit card).
+Obtenez la clé Gemini sur **aistudio.google.com → Get API key → Create API key** (gratuit, sans carte bancaire).
 
 ### `server.js`
-The full, ready-to-use server is in this repository (`server.js`). It includes:
-- `/chatui` — the chat window (with mic button)
-- `/portal` — full-screen Power BI report + floating chat
-- `/api/chatapi` — the AI + SQL logic (function calling)
-- `/api/transcribe` — voice → text via Gemini
+Le serveur complet, prêt à l'emploi, est dans ce dépôt (`server.js`). Il contient :
+- `/chatui` — la fenêtre de chat (avec bouton micro)
+- `/portal` — le rapport Power BI plein écran + chat flottant
+- `/api/chatapi` — la logique IA + SQL (function calling)
+- `/api/transcribe` — voix → texte via Gemini
 
-**The only part you customize is the schema description** (see STEP 3).
+**La seule partie que vous personnalisez est la description du schéma** (voir ÉTAPE 3).
 
-Install dependencies:
+Installez les dépendances :
 ```bash
 npm install
 ```
 
 ---
 
-## STEP 3 — Describe YOUR database (the only real work)
+## ÉTAPE 3 — Décrire VOTRE base de données (le seul vrai travail)
 
-Inside `server.js`, edit the `SYSTEM_PROMPT` to describe your tables, columns, and business rules. Example:
+Dans `server.js`, modifiez le `SYSTEM_PROMPT` pour décrire vos tables, colonnes et règles métier. Exemple :
 
 ```
-Schema (read-only):
-- dbo.Client : CodCli, Nom (customer name)
+Schéma (lecture seule) :
+- dbo.Client : CodCli, Nom (nom du client)
 - dbo.Facture : numbon, codcli (-> Client.CodCli), datesys (date)
-- dbo.MvtSto : numbon (-> Facture.numbon), montht (amount), typmvt ('S'=sale, 'E'=return)
+- dbo.MvtSto : numbon (-> Facture.numbon), montht (montant), typmvt ('S'=vente, 'E'=retour)
 
-Business definitions:
-- Revenue = SUM(montht) WHERE typmvt='S'
-- Net Sales = Revenue - Returns (typmvt='E')
+Définitions métier :
+- Chiffre d'affaires = SUM(montht) WHERE typmvt='S'
+- Ventes Nettes = CA - Retours (typmvt='E')
 
-Rules:
-- Always add WITH (NOLOCK) after each table.
-- Only join the tables needed for the question.
-- SELECT queries only, never modify data.
+Règles :
+- Toujours ajouter WITH (NOLOCK) après chaque table.
+- Ne joindre que les tables nécessaires à la question.
+- Requêtes SELECT uniquement, ne jamais modifier les données.
 ```
 
-**The better you describe the schema, the better the answers.** This is the key to accuracy.
+**Plus vous décrivez précisément le schéma, meilleures sont les réponses.** C'est la clé de la justesse.
 
 ---
 
-## STEP 4 — Run and test locally
+## ÉTAPE 4 — Lancer et tester en local
 
 ```bash
 node server.js
 ```
-Open **http://localhost:3000/chatui** in Chrome or Edge. Ask a question — it should answer from your real data.
+Ouvrez **http://localhost:3000/chatui** dans Chrome ou Edge. Posez une question — il doit répondre à partir de vos vraies données.
 
 ---
 
-## STEP 5 — Make it public with a permanent free URL (Tailscale Funnel)
+## ÉTAPE 5 — Rendre public avec une URL permanente gratuite (Tailscale Funnel)
 
-The chat must be reachable from Power BI (which loads it from the cloud). Tailscale Funnel gives a **stable public URL that never changes** — free.
+Le chat doit être joignable depuis Power BI (qui le charge depuis le cloud). Tailscale Funnel fournit une **URL publique stable qui ne change jamais** — gratuit.
 
-1. Install Tailscale: `winget install Tailscale.Tailscale`
-2. Log in (creates your free account):
+1. Installer Tailscale : `winget install Tailscale.Tailscale`
+2. Se connecter (crée votre compte gratuit) :
    ```
    tailscale up
    ```
-   (open the link it prints, sign in)
-3. Enable Funnel (one-time, open the link it prints):
+   (ouvrez le lien affiché, connectez-vous)
+3. Activer Funnel (une seule fois, ouvrez le lien affiché) :
    ```
    tailscale funnel --bg 3000
    ```
-   If it says *"Funnel is not enabled"*, open the link, click Enable, and re-run the command.
-4. It prints your **permanent URL**, e.g.:
+   S'il indique *"Funnel is not enabled"*, ouvrez le lien, cliquez sur Enable, et relancez la commande.
+4. Il affiche votre **URL permanente**, par exemple :
    ```
-   https://your-pc.your-tailnet.ts.net
+   https://votre-pc.votre-tailnet.ts.net
    ```
-   This URL is **fixed forever** and the Tailscale service auto-starts with Windows.
+   Cette URL est **fixe pour toujours** et le service Tailscale démarre automatiquement avec Windows.
 
-Test it: open `https://your-pc.your-tailnet.ts.net/portal` from any device.
+Testez : ouvrez `https://votre-pc.votre-tailnet.ts.net/portal` depuis n'importe quel appareil.
 
-> **Alternative (quick test only):** `cloudflared tunnel --url http://localhost:3000` gives a temporary URL, but it **changes on every restart** — use Tailscale for production.
+> **Alternative (test rapide uniquement) :** `cloudflared tunnel --url http://localhost:3000` donne une URL temporaire, mais elle **change à chaque redémarrage** — utilisez Tailscale pour la production.
 
 ---
 
-## STEP 6 — Add the chat to Power BI
+## ÉTAPE 6 — Ajouter le chat dans Power BI
 
-The chatbot lives in a small measure using the free **"HTML Content"** custom visual (from AppSource).
+Le chatbot vit dans une mesure utilisant le visuel personnalisé gratuit **"HTML Content"** (depuis AppSource).
 
-1. In Power BI Desktop, add the **HTML Content** visual to your page.
-2. Create a measure (replace the URL with YOUR Tailscale URL):
+1. Dans Power BI Desktop, ajoutez le visuel **HTML Content** à votre page.
+2. Créez une mesure (remplacez l'URL par VOTRE URL Tailscale) :
 
 ```dax
 Chatbot Widget HTML =
@@ -184,73 +184,73 @@ Chatbot Widget HTML =
 & "<details><summary style='list-style:none;width:56px;height:56px;border-radius:50%;background:#48b096;color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.35);'>"
 & UNICHAR(128172) & "</summary>"
 & "<div style='width:320px;height:440px;background:#fff;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.3);margin-top:8px;overflow:hidden;'>"
-& "<iframe src='https://your-pc.your-tailnet.ts.net/chatui' style='border:0;width:100%;height:100%;'></iframe>"
+& "<iframe src='https://votre-pc.votre-tailnet.ts.net/chatui' style='border:0;width:100%;height:100%;'></iframe>"
 & "</div></details></div>"
 ```
 
-3. Put this measure in the HTML Content visual's field. A floating 💬 button appears; clicking it opens the chat.
-4. (Optional) Copy the visual onto every page so the chat is always available.
+3. Placez cette mesure dans le champ du visuel HTML Content. Un bouton flottant 💬 apparaît ; cliquer dessus ouvre le chat.
+4. (Optionnel) Copiez le visuel sur chaque page pour que le chat soit toujours disponible.
 
-> **Note:** The mic works in the **web portal** (`/portal`), but often **not** inside the Power BI-embedded widget (Power BI's security sandbox blocks the microphone). Use the portal URL for voice.
+> **Note :** le micro fonctionne dans le **portail web** (`/portal`), mais souvent **pas** dans le widget intégré à Power BI (le bac à sable de sécurité de Power BI bloque le microphone). Utilisez l'URL du portail pour la voix.
 
 ---
 
-## STEP 7 (optional) — Auto-start on boot
+## ÉTAPE 7 (optionnel) — Démarrage automatique au boot
 
-Create `start-server.cmd`:
+Créez `start-server.cmd` :
 ```bat
 @echo off
-cd /d C:\path\to\powerbi-chatbot-server
+cd /d C:\chemin\vers\powerbi-chatbot-server
 :loop
 node server.js
 timeout /t 5 /nobreak >nul
 goto loop
 ```
-Put a shortcut to it (or a `.vbs` launcher) in the Windows **Startup** folder (`shell:startup`). Tailscale already auto-starts as a service.
+Placez un raccourci vers ce fichier (ou un lanceur `.vbs`) dans le dossier **Démarrage** de Windows (`shell:startup`). Tailscale démarre déjà automatiquement comme service.
 
 ---
 
-## How the voice feature works
+## Comment fonctionne la voix
 
-- Click the 🎤 button → it records your voice.
-- It **stops automatically** when you stop talking (silence detection).
-- The audio is sent to Gemini, which **transcribes it in any language** (auto-detected).
-- The text appears in the input box — review it, then send.
+- Cliquez sur le bouton 🎤 → il enregistre votre voix.
+- Il **s'arrête automatiquement** quand vous arrêtez de parler (détection de silence).
+- L'audio est envoyé à Gemini, qui le **transcrit dans n'importe quelle langue** (détectée automatiquement).
+- Le texte apparaît dans le champ de saisie — relisez-le, puis envoyez.
 
-No paid speech service needed — Gemini does the transcription for free.
-
----
-
-## Cost
-
-Using Google Gemini's **Flash-Lite** model (free tier: ~1000 requests/day):
-- Typical question ≈ **$0.001** (one-tenth of a cent) if you were on the paid tier
-- In practice: **$0** for normal usage (within the free daily quota)
-
-See `Resume_Projet` for a detailed model/cost comparison (Flash-Lite vs Flash vs Pro).
+Aucun service vocal payant nécessaire — Gemini fait la transcription gratuitement.
 
 ---
 
-## Security notes
+## Coût
 
-- The `.env` file (API key + DB password) must **never** be committed to GitHub. This repo's `.gitignore` already excludes it.
-- The database user is **read-only** and the server only allows `SELECT` queries.
-- Add authentication (password) on the chat if you expose sensitive data widely.
+Avec le modèle **Flash-Lite** de Google Gemini (niveau gratuit : ~1000 requêtes/jour) :
+- Une question type ≈ **0,001 $** (un dixième de centime) si vous étiez sur le niveau payant
+- En pratique : **0 $** pour un usage normal (dans le quota quotidien gratuit)
 
----
-
-## Reuse for another project
-
-Everything database-specific is in **two places**: the `.env` (connection) and the `SYSTEM_PROMPT` schema description in `server.js`. Change those two, point the Power BI iframe to your URL, and you have a chatbot for any other database. A ready-to-fill template is in the `/template` folder.
+Voir le document `Resume_Projet` pour une comparaison détaillée des modèles et des coûts (Flash-Lite vs Flash vs Pro).
 
 ---
 
-## Limitations
+## Notes de sécurité
 
-- The PC hosting the server must stay **on**.
-- Voice works on Chrome/Edge, in the web portal (not the embedded Power BI widget).
-- Free Gemini tier has a daily request limit (generous for most uses).
+- Le fichier `.env` (clé API + mot de passe base) ne doit **jamais** être versionné sur GitHub. Le `.gitignore` de ce dépôt l'exclut déjà.
+- L'utilisateur base est en **lecture seule** et le serveur n'autorise que les requêtes `SELECT`.
+- Ajoutez une authentification (mot de passe) sur le chat si vous exposez des données sensibles à grande échelle.
 
 ---
 
-*Built step by step with Claude. Free, open, reusable.*
+## Réutiliser pour un autre projet
+
+Tout ce qui dépend de la base est à **deux endroits** : le `.env` (connexion) et la description du schéma `SYSTEM_PROMPT` dans `server.js`. Changez ces deux éléments, pointez l'iframe Power BI vers votre URL, et vous avez un chatbot pour n'importe quelle autre base. Un modèle prêt à remplir est dans le dossier `/template`.
+
+---
+
+## Limites
+
+- Le PC qui héberge le serveur doit rester **allumé**.
+- La voix fonctionne sur Chrome/Edge, dans le portail web (pas dans le widget intégré à Power BI).
+- Le niveau gratuit de Gemini a une limite quotidienne de requêtes (généreuse pour la plupart des usages).
+
+---
+
+*Construit étape par étape avec Claude. Gratuit, ouvert, réutilisable.*
