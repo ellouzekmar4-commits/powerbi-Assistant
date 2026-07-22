@@ -3,6 +3,7 @@
 Un assistant IA intégré à un tableau de bord Power BI qui répond aux questions en langage naturel en interrogeant **votre vraie base de données SQL Server en direct** — avec **entrée vocale**, réponses multilingues et une **URL permanente gratuite**.
 
 📖 **Guide complet pas-à-pas (tout le monde peut le suivre) : [GUIDE.md](GUIDE.md)**
+🎤 **Guide dédié à l'entrée vocale (micro) : [GUIDE-MICRO.md](GUIDE-MICRO.md)**
 
 ---
 
