@@ -51,4 +51,4 @@ Le `.env` (clé API + mot de passe base) est **exclu de git** — jamais version
 
 ---
 
-*Construit étape par étape avec Claude. Gratuit, ouvert, réutilisable pour tout projet SQL Server + Power BI.*
+
