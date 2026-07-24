@@ -46,31 +46,31 @@ const PORTAL_HTML = `<!DOCTYPE html>
   #chatToggle {
     position:fixed; bottom:24px; right:24px; z-index:1001;
     width:64px; height:64px; border-radius:50%; border:none; cursor:pointer;
-    background:linear-gradient(135deg,#6366f1 0%,#7c3aed 100%);
-    box-shadow:0 6px 22px rgba(79,70,229,.45);
+    background:linear-gradient(135deg,#48b096 0%,#0C3549 100%);
+    box-shadow:0 6px 22px rgba(12,53,73,.45);
     display:flex; align-items:center; justify-content:center;
     transition: transform .2s ease, box-shadow .2s ease;
   }
-  #chatToggle:hover { transform:scale(1.08); box-shadow:0 9px 28px rgba(79,70,229,.55); }
+  #chatToggle:hover { transform:scale(1.08); box-shadow:0 9px 28px rgba(12,53,73,.55); }
   #chatToggle:active { transform:scale(.95); }
   #chatToggle svg { transition: transform .35s ease; }
   #chatToggle.open svg { transform:rotate(90deg); }
   #chatToggle::after {
     content:''; position:absolute; inset:0; border-radius:50%;
-    box-shadow:0 0 0 0 rgba(99,102,241,.55); animation:ring 2.6s infinite;
+    box-shadow:0 0 0 0 rgba(72,176,150,.55); animation:ring 2.6s infinite;
   }
   #chatToggle.open::after { animation:none; box-shadow:none; }
   @keyframes ring {
-    0%{ box-shadow:0 0 0 0 rgba(99,102,241,.5);}
-    70%{ box-shadow:0 0 0 18px rgba(99,102,241,0);}
-    100%{ box-shadow:0 0 0 0 rgba(99,102,241,0);}
+    0%{ box-shadow:0 0 0 0 rgba(72,176,150,.5);}
+    70%{ box-shadow:0 0 0 18px rgba(72,176,150,0);}
+    100%{ box-shadow:0 0 0 0 rgba(72,176,150,0);}
   }
 
   #chatPanel {
     position:fixed; bottom:100px; right:24px; z-index:1000;
     width:384px; height:560px; max-width:calc(100vw - 48px); max-height:calc(100vh - 140px);
     border-radius:18px; overflow:hidden; background:#fff;
-    box-shadow:0 14px 50px rgba(79,70,229,.28); border:1px solid #e6e8f2;
+    box-shadow:0 14px 50px rgba(12,53,73,.30); border:1px solid #e6ebea;
     transform-origin: bottom right;
     opacity:0; transform: translateY(24px) scale(.92); pointer-events:none;
     transition: opacity .28s ease, transform .34s cubic-bezier(.18,.85,.25,1.05);
@@ -83,15 +83,17 @@ const PORTAL_HTML = `<!DOCTYPE html>
   <iframe id="report" src="${PBI_EMBED_URL}" allowfullscreen></iframe>
   <div id="chatPanel"><iframe src="/chatui" title="Assistant IA" allow="microphone"></iframe></div>
   <button id="chatToggle" title="Assistant IA" aria-label="Ouvrir l'assistant">
-    <svg viewBox="0 0 24 24" width="30" height="30" fill="#ffffff">
-      <path d="M12 2.2c.45 3.9 2 5.45 5.9 5.9-3.9.45-5.45 2-5.9 5.9-.45-3.9-2-5.45-5.9-5.9 3.9-.45 5.45-2 5.9-5.9z"/>
-      <path d="M18.6 13.4c.25 2.05 1.1 2.9 3.15 3.15-2.05.25-2.9 1.1-3.15 3.15-.25-2.05-1.1-2.9-3.15-3.15 2.05-.25 2.9-1.1 3.15-3.15z"/>
+    <svg id="icoOpen" viewBox="0 0 24 24" width="30" height="30">
+      <path fill="#ffffff" d="M6 4h12a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3h-6.2L7 20v-4h-1a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3z"/>
+      <circle cx="9" cy="10" r="1.35" fill="#2f9c7d"/>
+      <circle cx="12.5" cy="10" r="1.35" fill="#2f9c7d"/>
+      <circle cx="16" cy="10" r="1.35" fill="#2f9c7d"/>
     </svg>
   </button>
   <script>
     var panel = document.getElementById('chatPanel');
     var btn = document.getElementById('chatToggle');
-    var ICON_OPEN = '<svg viewBox="0 0 24 24" width="30" height="30" fill="#ffffff"><path d="M12 2.2c.45 3.9 2 5.45 5.9 5.9-3.9.45-5.45 2-5.9 5.9-.45-3.9-2-5.45-5.9-5.9 3.9-.45 5.45-2 5.9-5.9z"/><path d="M18.6 13.4c.25 2.05 1.1 2.9 3.15 3.15-2.05.25-2.9 1.1-3.15 3.15-.25-2.05-1.1-2.9-3.15-3.15 2.05-.25 2.9-1.1 3.15-3.15z"/></svg>';
+    var ICON_OPEN = '<svg id="icoOpen" viewBox="0 0 24 24" width="30" height="30"><path fill="#ffffff" d="M6 4h12a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3h-6.2L7 20v-4h-1a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3z"/><circle cx="9" cy="10" r="1.35" fill="#2f9c7d"/><circle cx="12.5" cy="10" r="1.35" fill="#2f9c7d"/><circle cx="16" cy="10" r="1.35" fill="#2f9c7d"/></svg>';
     var ICON_CLOSE = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
     btn.addEventListener('click', function () {
       var open = panel.classList.toggle('open');
@@ -404,8 +406,8 @@ const CHAT_HTML = `<!DOCTYPE html>
 <title>Assistant IA</title>
 <style>
   * { box-sizing: border-box; }
-  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:linear-gradient(160deg,#f5f6fb 0%,#eceef8 100%); display:flex; flex-direction:column; height:100vh; color:#1e293b; }
-  .header { background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%); color:#fff; padding:14px 18px; font-weight:600; font-size:15px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 12px rgba(0,0,0,.18); z-index:2; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:linear-gradient(160deg,#eef3f2 0%,#e2ebe9 100%); display:flex; flex-direction:column; height:100vh; color:#1f2d2b; }
+  .header { background:linear-gradient(135deg,#0C3549 0%,#1c7a63 100%); color:#fff; padding:14px 18px; font-weight:600; font-size:15px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 12px rgba(0,0,0,.18); z-index:2; }
   .header .title { display:flex; align-items:center; gap:9px; }
   .header .dot { width:9px; height:9px; border-radius:50%; background:#5ee0b0; box-shadow:0 0 0 3px rgba(94,224,176,.3); }
   .newChat { background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.35); color:#fff; border-radius:20px; padding:5px 13px; font-size:12px; cursor:pointer; font-family:inherit; transition:background .2s; }
@@ -416,22 +418,22 @@ const CHAT_HTML = `<!DOCTYPE html>
   .msg { padding:10px 14px; max-width:82%; flex-shrink:0; word-wrap:break-word; white-space:pre-wrap; line-height:1.45; box-shadow:0 1px 3px rgba(0,0,0,.09); animation:pop .25s ease; }
   @keyframes pop { from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:translateY(0);} }
   .msg.bot { background:#ffffff; color:#1f2d2b; border-radius:16px 16px 16px 4px; align-self:flex-start; overflow-x:auto; }
-  .msg.user { background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; border-radius:16px 16px 4px 16px; align-self:flex-end; }
+  .msg.user { background:linear-gradient(135deg,#48b096,#2f9c7d); color:#fff; border-radius:16px 16px 4px 16px; align-self:flex-end; }
   .msg.error { background:#fdecec; color:#c0392b; border-radius:14px; align-self:flex-start; }
   .inputRow { padding:10px 12px; background:#fff; border-top:1px solid #e8ecec; display:flex; gap:8px; align-items:center; }
   .inputRow input { flex:1; border:1px solid #dfe5e4; border-radius:22px; padding:11px 16px; font-size:13px; outline:none; transition:border-color .2s, box-shadow .2s; background:#f6f8f8; }
-  .inputRow input:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.18); background:#fff; }
-  .inputRow button { background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; border:none; border-radius:50%; width:40px; height:40px; min-width:40px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; padding:0; box-shadow:0 2px 6px rgba(99,102,241,.4); transition:transform .15s; }
+  .inputRow input:focus { border-color:#48b096; box-shadow:0 0 0 3px rgba(72,176,150,.18); background:#fff; }
+  .inputRow button { background:linear-gradient(135deg,#48b096,#2f9c7d); color:#fff; border:none; border-radius:50%; width:40px; height:40px; min-width:40px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; padding:0; box-shadow:0 2px 6px rgba(47,156,125,.4); transition:transform .15s; }
   .inputRow button:hover:not(:disabled) { transform:scale(1.09); }
   .inputRow button:disabled { opacity:.45; cursor:default; box-shadow:none; }
   .typing { padding:4px 20px 12px; }
-  .typing span { display:inline-block; width:8px; height:8px; margin-right:4px; background:#6366f1; border-radius:50%; opacity:.4; animation:blink 1.2s infinite both; }
+  .typing span { display:inline-block; width:8px; height:8px; margin-right:4px; background:#48b096; border-radius:50%; opacity:.4; animation:blink 1.2s infinite both; }
   .typing span:nth-child(2){ animation-delay:.2s; }
   .typing span:nth-child(3){ animation-delay:.4s; }
   @keyframes blink { 0%,80%,100%{ opacity:.3; transform:translateY(0);} 40%{ opacity:1; transform:translateY(-4px);} }
   .msg table { border-collapse:collapse; width:100%; margin:6px 0; font-size:12px; border-radius:8px; overflow:hidden; }
   .msg th, .msg td { border:1px solid #e4e9e8; padding:6px 10px; text-align:left; }
-  .msg th { background:#4f46e5; color:#fff; font-weight:600; }
+  .msg th { background:#0C3549; color:#fff; font-weight:600; }
   .msg tr:nth-child(even) td { background:#f4f7f6; }
 </style>
 </head>
