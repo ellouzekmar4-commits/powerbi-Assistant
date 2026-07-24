@@ -379,38 +379,41 @@ const CHAT_HTML = `<!DOCTYPE html>
 <title>Assistant IA</title>
 <style>
   * { box-sizing: border-box; }
-  body { margin:0; font-family: 'Segoe UI', sans-serif; background:#ffffff; display:flex; flex-direction:column; height:100vh; }
-  .header { background:#0C3549; color:#fff; padding:12px 16px; font-weight:600; font-size:14px; display:flex; align-items:center; justify-content:space-between; }
-  .newChat { background:transparent; border:1px solid rgba(255,255,255,.5); color:#fff; border-radius:12px; padding:3px 8px; font-size:13px; cursor:pointer; font-family:inherit; }
-  .newChat:hover { background:rgba(255,255,255,.15); }
-  .hdrRight { display:flex; align-items:center; gap:6px; }
-  .hdrRight select { background:rgba(255,255,255,.15); color:#fff; border:1px solid rgba(255,255,255,.4); border-radius:8px; font-size:11px; padding:2px 4px; cursor:pointer; }
-  .hdrRight select option { color:#000; }
-  .messages { flex:1; padding:12px; overflow-y:auto; font-size:13px; color:#252423; }
-  .msg { border-radius:8px; padding:8px 10px; margin-bottom:8px; max-width:85%; word-wrap:break-word; white-space:pre-wrap; }
-  .msg.bot { background:#f2f2f2; }
-  .msg.user { background:#48b096; color:#fff; margin-left:auto; text-align:right; }
-  .msg.error { background:#fdecea; color:#b3261e; }
-  .inputRow { padding:8px 10px; border-top:1px solid #eee; display:flex; gap:6px; }
-  .inputRow input { flex:1; border:1px solid #ddd; border-radius:14px; padding:8px 12px; font-size:12px; }
-  .inputRow button { background:#48b096; color:#fff; border:none; border-radius:50%; width:34px; height:34px; min-width:34px; cursor:pointer; font-size:14px; display:inline-flex; align-items:center; justify-content:center; padding:0; }
-  .inputRow button:disabled { opacity:0.5; cursor:default; }
-  .typing { padding:2px 14px 10px; }
-  .typing span { display:inline-block; width:7px; height:7px; margin-right:4px; background:#48b096; border-radius:50%; opacity:.4; animation:blink 1.2s infinite both; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:linear-gradient(160deg,#eef3f2 0%,#e2ebe9 100%); display:flex; flex-direction:column; height:100vh; color:#1f2d2b; }
+  .header { background:linear-gradient(135deg,#0C3549 0%,#1c7a63 100%); color:#fff; padding:14px 18px; font-weight:600; font-size:15px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 12px rgba(0,0,0,.18); z-index:2; }
+  .header .title { display:flex; align-items:center; gap:9px; }
+  .header .dot { width:9px; height:9px; border-radius:50%; background:#5ee0b0; box-shadow:0 0 0 3px rgba(94,224,176,.3); }
+  .newChat { background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.35); color:#fff; border-radius:20px; padding:5px 13px; font-size:12px; cursor:pointer; font-family:inherit; transition:background .2s; }
+  .newChat:hover { background:rgba(255,255,255,.3); }
+  .messages { flex:1; padding:16px 14px; overflow-y:auto; font-size:13.5px; display:flex; flex-direction:column; gap:10px; }
+  .messages::-webkit-scrollbar { width:6px; }
+  .messages::-webkit-scrollbar-thumb { background:rgba(0,0,0,.15); border-radius:3px; }
+  .msg { padding:10px 14px; max-width:82%; word-wrap:break-word; white-space:pre-wrap; line-height:1.45; box-shadow:0 1px 3px rgba(0,0,0,.09); animation:pop .25s ease; }
+  @keyframes pop { from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:translateY(0);} }
+  .msg.bot { background:#ffffff; color:#1f2d2b; border-radius:16px 16px 16px 4px; align-self:flex-start; overflow-x:auto; }
+  .msg.user { background:linear-gradient(135deg,#48b096,#2f9c7d); color:#fff; border-radius:16px 16px 4px 16px; align-self:flex-end; }
+  .msg.error { background:#fdecec; color:#c0392b; border-radius:14px; align-self:flex-start; }
+  .inputRow { padding:10px 12px; background:#fff; border-top:1px solid #e8ecec; display:flex; gap:8px; align-items:center; }
+  .inputRow input { flex:1; border:1px solid #dfe5e4; border-radius:22px; padding:11px 16px; font-size:13px; outline:none; transition:border-color .2s, box-shadow .2s; background:#f6f8f8; }
+  .inputRow input:focus { border-color:#48b096; box-shadow:0 0 0 3px rgba(72,176,150,.18); background:#fff; }
+  .inputRow button { background:linear-gradient(135deg,#48b096,#2f9c7d); color:#fff; border:none; border-radius:50%; width:40px; height:40px; min-width:40px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; padding:0; box-shadow:0 2px 6px rgba(47,156,125,.4); transition:transform .15s; }
+  .inputRow button:hover:not(:disabled) { transform:scale(1.09); }
+  .inputRow button:disabled { opacity:.45; cursor:default; box-shadow:none; }
+  .typing { padding:4px 20px 12px; }
+  .typing span { display:inline-block; width:8px; height:8px; margin-right:4px; background:#48b096; border-radius:50%; opacity:.4; animation:blink 1.2s infinite both; }
   .typing span:nth-child(2){ animation-delay:.2s; }
   .typing span:nth-child(3){ animation-delay:.4s; }
-  @keyframes blink { 0%,80%,100%{ opacity:.3; transform:translateY(0);} 40%{ opacity:1; transform:translateY(-3px);} }
-  .msg table { border-collapse:collapse; width:100%; margin:4px 0; font-size:12px; }
-  .msg th, .msg td { border:1px solid #ddd; padding:4px 8px; text-align:left; }
+  @keyframes blink { 0%,80%,100%{ opacity:.3; transform:translateY(0);} 40%{ opacity:1; transform:translateY(-4px);} }
+  .msg table { border-collapse:collapse; width:100%; margin:6px 0; font-size:12px; border-radius:8px; overflow:hidden; }
+  .msg th, .msg td { border:1px solid #e4e9e8; padding:6px 10px; text-align:left; }
   .msg th { background:#0C3549; color:#fff; font-weight:600; }
-  .msg tr:nth-child(even) td { background:#f7f7f7; }
-  .msg.bot { overflow-x:auto; }
+  .msg tr:nth-child(even) td { background:#f4f7f6; }
 </style>
 </head>
 <body>
-  <div class="header">Assistant IA <button class="newChat" id="newChat" title="Effacer la conversation">&#8634; Nouveau chat</button></div>
+  <div class="header"><span class="title"><span class="dot"></span>Assistant IA</span><button class="newChat" id="newChat" title="Nouvelle conversation">&#8634; Nouveau</button></div>
   <div class="messages" id="messages">
-    <div class="msg bot">Bonjour ! Comment puis-je vous aider avec vos donnees ?</div>
+    <div class="msg bot">Bonjour&nbsp;! Comment puis-je vous aider avec vos donnees ?</div>
   </div>
   <div class="typing" id="typing" style="display:none;"><span></span><span></span><span></span></div>
   <div class="inputRow">
