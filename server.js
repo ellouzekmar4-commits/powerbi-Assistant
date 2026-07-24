@@ -397,7 +397,7 @@ const CHAT_HTML = `<!DOCTYPE html>
   <div class="messages" id="messages">
     <div class="msg bot">Bonjour ! Comment puis-je vous aider avec vos donnees ?</div>
   </div>
-  <div class="typing" id="typing" style="display:none;">L'assistant ecrit...</div>
+  <div class="typing" id="typing" style="display:none;">...</div>
   <div class="inputRow">
     <input id="input" type="text" placeholder="Ecrivez un message..." autocomplete="off">
     <button id="mic" title="Parler"><svg width="17" height="17" viewBox="0 0 24 24" fill="#fff"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M19 11a1 1 0 1 0-2 0 5 5 0 0 1-10 0 1 1 0 1 0-2 0 7 7 0 0 0 6 6.93V21a1 1 0 1 0 2 0v-3.07A7 7 0 0 0 19 11z"/></svg></button>
