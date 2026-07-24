@@ -124,7 +124,12 @@ async function transcribeAudio(b64wav, apiKey) {
         })
     });
     const data = await res.json();
-    if (!res.ok) throw new Error((data.error && data.error.message) || "Erreur transcription Gemini");
+    if (!res.ok) {
+        if (res.status === 429 || /quota|resource_exhausted|rate limit/i.test((data.error && data.error.message) || "")) {
+            throw new Error("La limite quotidienne gratuite est atteinte. Merci de reessayer demain. / Free daily limit reached, try again tomorrow.");
+        }
+        throw new Error((data.error && data.error.message) || "Erreur transcription Gemini");
+    }
     const parts = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
     const t = parts.filter(function (p) { return p.text && !p.thought; }).map(function (p) { return p.text; }).join("").trim();
     return t;
@@ -248,6 +253,12 @@ async function callGemini(contents, apiKey, model) {
         }
 
         const message = (data.error && data.error.message) || "Erreur API Gemini";
+
+        // Quota quotidien gratuit atteint
+        if (res.status === 429 || /quota|resource_exhausted|rate limit/i.test(message)) {
+            throw new Error("La limite quotidienne gratuite de l'assistant est atteinte. Merci de reessayer demain (la limite se reinitialise chaque jour). / The free daily limit has been reached, please try again tomorrow.");
+        }
+
         const overloaded = res.status === 503 || /high demand|overloaded|unavailable/i.test(message);
 
         if (overloaded && attempt < maxRetries) {
