@@ -384,7 +384,11 @@ const CHAT_HTML = `<!DOCTYPE html>
   .inputRow input { flex:1; border:1px solid #ddd; border-radius:14px; padding:8px 12px; font-size:12px; }
   .inputRow button { background:#48b096; color:#fff; border:none; border-radius:50%; width:34px; height:34px; min-width:34px; cursor:pointer; font-size:14px; display:inline-flex; align-items:center; justify-content:center; padding:0; }
   .inputRow button:disabled { opacity:0.5; cursor:default; }
-  .typing { font-style:italic; color:#999; font-size:12px; padding:0 12px 8px; }
+  .typing { padding:2px 14px 10px; }
+  .typing span { display:inline-block; width:7px; height:7px; margin-right:4px; background:#48b096; border-radius:50%; opacity:.4; animation:blink 1.2s infinite both; }
+  .typing span:nth-child(2){ animation-delay:.2s; }
+  .typing span:nth-child(3){ animation-delay:.4s; }
+  @keyframes blink { 0%,80%,100%{ opacity:.3; transform:translateY(0);} 40%{ opacity:1; transform:translateY(-3px);} }
   .msg table { border-collapse:collapse; width:100%; margin:4px 0; font-size:12px; }
   .msg th, .msg td { border:1px solid #ddd; padding:4px 8px; text-align:left; }
   .msg th { background:#0C3549; color:#fff; font-weight:600; }
@@ -397,7 +401,7 @@ const CHAT_HTML = `<!DOCTYPE html>
   <div class="messages" id="messages">
     <div class="msg bot">Bonjour ! Comment puis-je vous aider avec vos donnees ?</div>
   </div>
-  <div class="typing" id="typing" style="display:none;">...</div>
+  <div class="typing" id="typing" style="display:none;"><span></span><span></span><span></span></div>
   <div class="inputRow">
     <input id="input" type="text" placeholder="Ecrivez un message..." autocomplete="off">
     <button id="mic" title="Parler"><svg width="17" height="17" viewBox="0 0 24 24" fill="#fff"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M19 11a1 1 0 1 0-2 0 5 5 0 0 1-10 0 1 1 0 1 0-2 0 7 7 0 0 0 6 6.93V21a1 1 0 1 0 2 0v-3.07A7 7 0 0 0 19 11z"/></svg></button>
