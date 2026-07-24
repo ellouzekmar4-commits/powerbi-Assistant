@@ -40,38 +40,65 @@ const PORTAL_HTML = `<!DOCTYPE html>
 <title>Dashboard Clinique</title>
 <style>
   * { box-sizing: border-box; }
-  html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:'Segoe UI', sans-serif; }
+  html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
   #report { position:fixed; inset:0; width:100%; height:100%; border:0; }
+
   #chatToggle {
-    position:fixed; bottom:24px; right:24px; z-index:1000;
-    width:60px; height:60px; border-radius:50%; border:none; cursor:pointer;
-    background:#48b096; color:#fff; font-size:28px;
-    box-shadow:0 4px 16px rgba(0,0,0,.35);
+    position:fixed; bottom:24px; right:24px; z-index:1001;
+    width:64px; height:64px; border-radius:50%; border:none; cursor:pointer;
+    background:linear-gradient(135deg,#48b096 0%,#0C3549 100%);
+    box-shadow:0 6px 22px rgba(12,53,73,.45);
     display:flex; align-items:center; justify-content:center;
-    transition: transform .15s ease;
+    transition: transform .2s ease, box-shadow .2s ease;
   }
-  #chatToggle:hover { transform:scale(1.08); }
+  #chatToggle:hover { transform:scale(1.08); box-shadow:0 9px 28px rgba(12,53,73,.55); }
+  #chatToggle:active { transform:scale(.95); }
+  #chatToggle svg { transition: transform .35s ease; }
+  #chatToggle.open svg { transform:rotate(90deg); }
+  #chatToggle::after {
+    content:''; position:absolute; inset:0; border-radius:50%;
+    box-shadow:0 0 0 0 rgba(72,176,150,.55); animation:ring 2.6s infinite;
+  }
+  #chatToggle.open::after { animation:none; box-shadow:none; }
+  @keyframes ring {
+    0%{ box-shadow:0 0 0 0 rgba(72,176,150,.5);}
+    70%{ box-shadow:0 0 0 18px rgba(72,176,150,0);}
+    100%{ box-shadow:0 0 0 0 rgba(72,176,150,0);}
+  }
+
   #chatPanel {
-    position:fixed; bottom:96px; right:24px; z-index:1000;
-    width:380px; height:540px; max-width:calc(100vw - 48px); max-height:calc(100vh - 130px);
-    border-radius:14px; overflow:hidden; background:#fff;
-    box-shadow:0 10px 40px rgba(0,0,0,.35); border:1px solid #e0e0e0;
-    display:none;
+    position:fixed; bottom:100px; right:24px; z-index:1000;
+    width:384px; height:560px; max-width:calc(100vw - 48px); max-height:calc(100vh - 140px);
+    border-radius:18px; overflow:hidden; background:#fff;
+    box-shadow:0 14px 50px rgba(12,53,73,.30); border:1px solid #e6ebea;
+    transform-origin: bottom right;
+    opacity:0; transform: translateY(24px) scale(.92); pointer-events:none;
+    transition: opacity .28s ease, transform .34s cubic-bezier(.18,.85,.25,1.05);
   }
-  #chatPanel.open { display:block; }
+  #chatPanel.open { opacity:1; transform:none; pointer-events:auto; }
   #chatPanel iframe { width:100%; height:100%; border:0; }
 </style>
 </head>
 <body>
   <iframe id="report" src="${PBI_EMBED_URL}" allowfullscreen></iframe>
   <div id="chatPanel"><iframe src="/chatui" title="Assistant IA" allow="microphone"></iframe></div>
-  <button id="chatToggle" title="Assistant IA">&#128172;</button>
+  <button id="chatToggle" title="Assistant IA" aria-label="Ouvrir l'assistant">
+    <svg id="icoOpen" viewBox="0 0 24 24" width="30" height="30">
+      <path fill="#ffffff" d="M6 4h12a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3h-6.2L7 20v-4h-1a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3z"/>
+      <circle cx="9" cy="10" r="1.35" fill="#2f9c7d"/>
+      <circle cx="12.5" cy="10" r="1.35" fill="#2f9c7d"/>
+      <circle cx="16" cy="10" r="1.35" fill="#2f9c7d"/>
+    </svg>
+  </button>
   <script>
     var panel = document.getElementById('chatPanel');
     var btn = document.getElementById('chatToggle');
+    var ICON_OPEN = '<svg id="icoOpen" viewBox="0 0 24 24" width="30" height="30"><path fill="#ffffff" d="M6 4h12a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3h-6.2L7 20v-4h-1a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3z"/><circle cx="9" cy="10" r="1.35" fill="#2f9c7d"/><circle cx="12.5" cy="10" r="1.35" fill="#2f9c7d"/><circle cx="16" cy="10" r="1.35" fill="#2f9c7d"/></svg>';
+    var ICON_CLOSE = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
     btn.addEventListener('click', function () {
       var open = panel.classList.toggle('open');
-      btn.innerHTML = open ? '&#10005;' : '&#128172;';
+      btn.classList.toggle('open', open);
+      btn.innerHTML = open ? ICON_CLOSE : ICON_OPEN;
     });
   </script>
 </body>
