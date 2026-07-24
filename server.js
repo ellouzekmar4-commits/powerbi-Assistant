@@ -388,7 +388,7 @@ const CHAT_HTML = `<!DOCTYPE html>
   .messages { flex:1; padding:16px 14px; overflow-y:auto; font-size:13.5px; display:flex; flex-direction:column; gap:10px; }
   .messages::-webkit-scrollbar { width:6px; }
   .messages::-webkit-scrollbar-thumb { background:rgba(0,0,0,.15); border-radius:3px; }
-  .msg { padding:10px 14px; max-width:82%; word-wrap:break-word; white-space:pre-wrap; line-height:1.45; box-shadow:0 1px 3px rgba(0,0,0,.09); animation:pop .25s ease; }
+  .msg { padding:10px 14px; max-width:82%; flex-shrink:0; word-wrap:break-word; white-space:pre-wrap; line-height:1.45; box-shadow:0 1px 3px rgba(0,0,0,.09); animation:pop .25s ease; }
   @keyframes pop { from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:translateY(0);} }
   .msg.bot { background:#ffffff; color:#1f2d2b; border-radius:16px 16px 16px 4px; align-self:flex-start; overflow-x:auto; }
   .msg.user { background:linear-gradient(135deg,#48b096,#2f9c7d); color:#fff; border-radius:16px 16px 4px 16px; align-self:flex-end; }
